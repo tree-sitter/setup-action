@@ -1,0 +1,47 @@
+name: Tree-sitter CLI setup
+description: Set up the tree-sitter CLI
+
+inputs:
+  tree-sitter-ref:
+    description: A tree-sitter commit, tag, or branch
+    default: master
+  rust-toolchain:
+    description: Rust toolchain
+    default: stable
+
+runs:
+  using: composite
+  steps:
+    - name: Cache tree-sitter CLI
+      uses: actions/cache@v4
+      if: inputs.tree-sitter-ref != 'master'
+      id: cache-cli
+      with:
+        path: ${{runner.tool_cache}}/tree-sitter/cli
+        key: tree-sitter.cli.${{inputs.tree-sitter-ref}}
+    - name: Set up Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1.8
+      if: steps.cache-cli.outputs.cache-hit != 'true'
+      with:
+        toolchain: ${{inputs.rust-toolchain}}
+    - name: Install the tree-sitter cli
+      if: steps.cache-cli.outputs.cache-hit != 'true'
+      shell: bash
+      run: |-
+        ts_install() {
+          cargo install --git https://github.com/tree-sitter/tree-sitter \
+            --$1 "$2" --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
+        }
+        if [[ $TREE_SITTER_REF =~ ^[[:xdigit:]]{7,40}$ ]]; then
+          ts_install rev "$TREE_SITTER_REF"
+        elif [[ $TREE_SITTER_REF =~ ^v ]]; then
+          ts_install tag "$TREE_SITTER_REF"
+        else
+          ts_install branch "$TREE_SITTER_REF"
+        fi
+      env:
+        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
+    - name: Set up the CLI path
+      shell: sh
+      run: printf '${{runner.tool_cache}}/tree-sitter/cli/bin\n' >> "$GITHUB_PATH"
+

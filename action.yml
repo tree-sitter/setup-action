@@ -1,0 +1,35 @@
+name: Tree-sitter setup
+description: Set up the tree-sitter library & CLI
+
+branding:
+  color: green
+  icon: sliders
+
+inputs:
+  install-cli:
+    description: Install the CLI
+    default: "true"
+  install-lib:
+    description: Install the library
+    default: "true"
+  tree-sitter-ref:
+    description: A tree-sitter commit, tag, or branch
+    default: master
+  rust-toolchain:
+    description: Rust toolchain
+    default: stable
+
+runs:
+  using: composite
+  steps:
+    - name: Install the CLI
+      uses: tree-sitter/setup-action/cli@v1
+      if: inputs.install-cli == 'true'
+      with:
+        rust-toolchain: ${{inputs.rust-toolchain}}
+        tree-sitter-ref: ${{inputs.tree-sitter-ref}}
+    - name: Install the library
+      uses: tree-sitter/setup-action/lib@v1
+      if: inputs.install-lib == 'true'
+      with:
+        tree-sitter-ref: ${{inputs.tree-sitter-ref}}
