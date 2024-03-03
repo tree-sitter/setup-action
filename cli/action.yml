@@ -28,19 +28,21 @@ runs:
       if: steps.cache-cli.outputs.cache-hit != 'true'
       shell: bash
       run: |-
-        ts_install() {
-          cargo install --git https://github.com/tree-sitter/tree-sitter \
-            --$1 "$2" --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
-        }
-        if [[ $TREE_SITTER_REF =~ ^[[:xdigit:]]{7,40}$ ]]; then
-          ts_install rev "$TREE_SITTER_REF"
-        elif [[ $TREE_SITTER_REF =~ ^v ]]; then
-          ts_install tag "$TREE_SITTER_REF"
+        if [[ ${TREE_SITTER_REF:0:1} == v ]]; then
+          mkdir -p "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin"
+          curl -LSs "$TREE_SITTER_REPO/releases/download/$TREE_SITTER_REF/tree-sitter-linux-x64.gz" | \
+            gunzip > "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/tree-sitter"
+          chmod +x "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/tree-sitter"
+        elif [[ $TREE_SITTER_REF =~ ^[[:xdigit:]]{7,40}$ ]]; then
+          cargo install --git "$TREE_SITTER_REPO" --ref "$TREE_SITTER_REF" \
+            --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
         else
-          ts_install branch "$TREE_SITTER_REF"
+          cargo install --git "$TREE_SITTER_REPO" --branch "$TREE_SITTER_REF" \
+            --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
         fi
       env:
         TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
+        TREE_SITTER_REPO: https://github.com/tree-sitter/tree-sitter
     - name: Set up the CLI path
       shell: sh
       run: printf '${{runner.tool_cache}}/tree-sitter/cli/bin\n' >> "$GITHUB_PATH"
