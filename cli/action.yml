@@ -12,8 +12,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Cache tree-sitter CLI
-      uses: actions/cache@v4
+    - name: Restore tree-sitter CLI from cache
+      uses: actions/cache/restore@v4
       if: inputs.tree-sitter-ref != 'master'
       id: cache-cli
       with:
@@ -46,4 +46,9 @@ runs:
     - name: Set up the CLI path
       shell: sh
       run: printf '${{runner.tool_cache}}/tree-sitter/cli/bin\n' >> "$GITHUB_PATH"
-
+    - name: Save tree-sitter CLI to cache
+      uses: actions/cache/save@v4
+      if: inputs.tree-sitter-ref != 'master' && steps.cache-cli.outputs.cache-hit != 'true'
+      with:
+        path: ${{runner.tool_cache}}/tree-sitter/cli
+        key: tree-sitter.cli.${{inputs.tree-sitter-ref}}

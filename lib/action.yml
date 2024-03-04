@@ -9,8 +9,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Cache tree-sitter library
-      uses: actions/cache@v4
+    - name: Restore tree-sitter library from cache
+      uses: actions/cache/restore@v4
       if: inputs.tree-sitter-ref != 'master'
       id: cache-lib
       with:
@@ -32,3 +32,9 @@ runs:
         printf '%s\n' >> "$GITHUB_ENV" \
           "LD_LIBRARY_PATH=$RUNNER_TOOL_CACHE/tree-sitter/lib/lib" \
           "PKG_CONFIG_PATH=$RUNNER_TOOL_CACHE/tree-sitter/lib/lib/pkgconfig"
+    - name: Save tree-sitter library to cache
+      uses: actions/cache/save@v4
+      if: inputs.tree-sitter-ref != 'master' && steps.cache-lib.outputs.cache-hit != 'true'
+      with:
+        path: ${{runner.tool_cache}}/tree-sitter/lib
+        key: tree-sitter.lib.${{inputs.tree-sitter-ref}}
