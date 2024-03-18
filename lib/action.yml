@@ -4,7 +4,7 @@ description: Set up the tree-sitter library
 inputs:
   tree-sitter-ref:
     description: A tree-sitter commit, tag, or branch
-    default: master
+    default: latest
 
 runs:
   using: composite
@@ -23,9 +23,14 @@ runs:
       run: |-
         printf '::group::Installing the tree-sitter library\n'
         git clone https://github.com/tree-sitter/tree-sitter -q --filter=blob:none
-        cd tree-sitter && git checkout '${{inputs.tree-sitter-ref}}'
+        if [[ $TREE_SITTER_REF == latest ]]; then
+          TREE_SITTER_REF=$(git -C tree-sitter tag | tail -1)
+        fi
+        cd tree-sitter && git checkout "$TREE_SITTER_REF"
         make && make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib" install
         printf '::endgroup::\n'
+      env:
+        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
     - name: Set up the library paths
       shell: sh
       run: |-

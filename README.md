@@ -11,7 +11,7 @@ install-lib:
   default: true
 tree-sitter-ref:
   description: A tree-sitter commit, tag, or branch
-  default: master
+  default: latest
 rust-toolchain:
   description: Rust toolchain
   default: stable
