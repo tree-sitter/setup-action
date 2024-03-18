@@ -36,9 +36,12 @@ runs:
         fi
         if [[ ${TREE_SITTER_REF:0:1} == v ]]; then
           mkdir -p "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin"
-          curl -LSs "$TREE_SITTER_REPO/releases/download/$TREE_SITTER_REF/tree-sitter-linux-x64.gz" | \
-            gunzip > "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/tree-sitter"
-          chmod +x "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/tree-sitter"
+          [[ ${RUNNER_OS} == Windows ]] && exe=tree-sitter.exe || exe=tree-sitter
+          os=$(tr '[:upper:]' '[:lower:]' <<< "$RUNNER_OS")
+          arch=$(tr '[:upper:]' '[:lower:]' <<< "$RUNNER_ARCH")
+          curl -LSs "$TREE_SITTER_REPO/releases/download/$TREE_SITTER_REF/tree-sitter-$os-$arch.gz" | \
+            gunzip > "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/$exe"
+          chmod +x "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin/$exe"
         elif [[ $TREE_SITTER_REF =~ ^[[:xdigit:]]{7,40}$ ]]; then
           cargo install --git "$TREE_SITTER_REPO" --ref "$TREE_SITTER_REF" \
             --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
@@ -53,6 +56,11 @@ runs:
     - name: Set up the CLI path
       shell: sh
       run: printf '${{runner.tool_cache}}/tree-sitter/cli/bin\n' >> "$GITHUB_PATH"
+    - name: Configure the parser directories
+      shell: bash
+      run: |-
+        config="$(tree-sitter init-config | cut -c32- | tr '\\' '/')"
+        printf '{"parser-directories":["%q"]}' "${GITHUB_WORKSPACE%/*}" > "$config"
     - name: Save tree-sitter CLI to cache
       uses: actions/cache/save@v4
       if: >-
