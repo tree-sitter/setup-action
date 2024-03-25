@@ -19,7 +19,7 @@ runs:
     - name: Install tree-sitter library
       if: steps.cache-lib.outputs.cache-hit != 'true'
       working-directory: ${{runner.temp}}
-      shell: sh
+      shell: bash
       run: |-
         printf '::group::Installing the tree-sitter library\n'
         git clone https://github.com/tree-sitter/tree-sitter -q --filter=blob:none
