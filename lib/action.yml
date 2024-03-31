@@ -27,7 +27,8 @@ runs:
           TREE_SITTER_REF=$(git -C tree-sitter tag | tail -1)
         fi
         cd tree-sitter && git checkout "$TREE_SITTER_REF"
-        make && make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib" install
+        make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
+        make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib" install
         printf '::endgroup::\n'
       env:
         TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
