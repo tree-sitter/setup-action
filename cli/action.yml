@@ -12,28 +12,37 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Set up environment
+      shell: bash
+      run: |-
+        if [[ $TREE_SITTER_REF == latest ]]; then
+          TREE_SITTER_REF=$(gh release view -R "$TREE_SITTER_REPO" -q .tagName --json tagName)
+        fi
+        printf '%s\n' >> "$GITHUB_ENV" \
+            "TREE_SITTER_REF=$TREE_SITTER_REF" \
+            "TREE_SITTER_REPO=$TREE_SITTER_REPO"
+      env:
+        GH_TOKEN: ${{github.token}}
+        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
+        TREE_SITTER_REPO: https://github.com/tree-sitter/tree-sitter
     - name: Restore tree-sitter CLI from cache
       uses: actions/cache/restore@v4
-      if: inputs.tree-sitter-ref != 'master'
+      if: env.TREE_SITTER_REF != 'master'
       id: cache-cli
       with:
         path: ${{runner.tool_cache}}/tree-sitter/cli
-        key: tree-sitter.cli.${{inputs.tree-sitter-ref}}
+        key: tree-sitter-cli-${{runner.os}}-${{env.TREE_SITTER_REF}}
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1.8
       if: >-
         steps.cache-cli.outputs.cache-hit != 'true' &&
-        inputs.tree-sitter-ref != 'latest' &&
-        !startsWith(inputs.tree-sitter-ref, 'v')
+        !startsWith(env.TREE_SITTER_REF, 'v')
       with:
         toolchain: ${{inputs.rust-toolchain}}
     - name: Install the tree-sitter cli
       if: steps.cache-cli.outputs.cache-hit != 'true'
       shell: bash
       run: |-
-        if [[ $TREE_SITTER_REF == latest ]]; then
-          TREE_SITTER_REF=$(gh release view -R "$TREE_SITTER_REPO" -q .tagName --json tagName)
-        fi
         if [[ ${TREE_SITTER_REF:0:1} == v ]]; then
           mkdir -p "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin"
           [[ ${RUNNER_OS} == Windows ]] && exe=tree-sitter.exe || exe=tree-sitter
@@ -49,10 +58,6 @@ runs:
           cargo install --git "$TREE_SITTER_REPO" --branch "$TREE_SITTER_REF" \
             --root "$RUNNER_TOOL_CACHE/tree-sitter/cli" tree-sitter-cli
         fi
-      env:
-        GH_TOKEN: ${{github.token}}
-        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
-        TREE_SITTER_REPO: https://github.com/tree-sitter/tree-sitter
     - name: Set up the CLI path
       shell: sh
       run: printf '${{runner.tool_cache}}/tree-sitter/cli/bin\n' >> "$GITHUB_PATH"
@@ -64,8 +69,8 @@ runs:
     - name: Save tree-sitter CLI to cache
       uses: actions/cache/save@v4
       if: >-
-        inputs.tree-sitter-ref != 'master' &&
+        env.TREE_SITTER_REF != 'master' &&
         steps.cache-cli.outputs.cache-hit != 'true'
       with:
         path: ${{runner.tool_cache}}/tree-sitter/cli
-        key: tree-sitter.cli.${{inputs.tree-sitter-ref}}
+        key: tree-sitter-cli-${{runner.os}}-${{env.TREE_SITTER_REF}}

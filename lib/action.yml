@@ -9,30 +9,38 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Set up environment
+      shell: bash
+      run: |-
+        if [[ $TREE_SITTER_REF == latest ]]; then
+          TREE_SITTER_REF=$(gh release view -R "$TREE_SITTER_REPO" -q .tagName --json tagName)
+        fi
+        printf '%s\n' >> "$GITHUB_ENV" \
+            "TREE_SITTER_REF=$TREE_SITTER_REF" \
+            "TREE_SITTER_REPO=$TREE_SITTER_REPO"
+      env:
+        GH_TOKEN: ${{github.token}}
+        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
+        TREE_SITTER_REPO: https://github.com/tree-sitter/tree-sitter
     - name: Restore tree-sitter library from cache
       uses: actions/cache/restore@v4
-      if: inputs.tree-sitter-ref != 'master'
+      if: env.TREE_SITTER_REF != 'master'
       id: cache-lib
       with:
         path: ${{runner.tool_cache}}/tree-sitter/lib
-        key: tree-sitter.lib.${{inputs.tree-sitter-ref}}
+        key: tree-sitter-lib-${{runner.os}}-${{env.TREE_SITTER_REF}}
     - name: Install tree-sitter library
       if: steps.cache-lib.outputs.cache-hit != 'true'
       working-directory: ${{runner.temp}}
       shell: bash
       run: |-
         printf '::group::Installing the tree-sitter library\n'
-        git clone https://github.com/tree-sitter/tree-sitter -q --filter=blob:none
-        if [[ $TREE_SITTER_REF == latest ]]; then
-          TREE_SITTER_REF=$(git -C tree-sitter tag | tail -1)
-        fi
+        git clone "$TREE_SITTER_REPO" tree-sitter -q --filter=blob:none
         cd tree-sitter && git checkout "$TREE_SITTER_REF"
         make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
         make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib" install
         printf '::endgroup::\n'
-      env:
-        TREE_SITTER_REF: ${{inputs.tree-sitter-ref}}
-    - name: Set up the library paths
+    - name: Set up library paths
       shell: sh
       run: |-
         printf '%s\n' >> "$GITHUB_ENV" \
@@ -40,7 +48,9 @@ runs:
           "PKG_CONFIG_PATH=$RUNNER_TOOL_CACHE/tree-sitter/lib/lib/pkgconfig"
     - name: Save tree-sitter library to cache
       uses: actions/cache/save@v4
-      if: inputs.tree-sitter-ref != 'master' && steps.cache-lib.outputs.cache-hit != 'true'
+      if: >-
+        env.TREE_SITTER_REF != 'master' &&
+        steps.cache-lib.outputs.cache-hit != 'true'
       with:
         path: ${{runner.tool_cache}}/tree-sitter/lib
-        key: tree-sitter.lib.${{inputs.tree-sitter-ref}}
+        key: tree-sitter-lib-${{runner.os}}-${{env.TREE_SITTER_REF}}
