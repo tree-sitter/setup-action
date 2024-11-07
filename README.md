@@ -30,7 +30,7 @@ jobs:
     name: Generate parser
     runs-on: ubuntu-latest
     steps:
-      - uses: tree-sitter/setup-action@v1
+      - uses: tree-sitter/setup-action@v2
         with:
           install-lib: false
       - run: tree-sitter generate

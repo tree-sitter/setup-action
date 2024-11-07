@@ -5,6 +5,9 @@ inputs:
   tree-sitter-ref:
     description: A tree-sitter commit, tag, or branch
     default: latest
+  wasmtime:
+    description: Enable wasmtime
+    default: "false"
 
 runs:
   using: composite
@@ -34,18 +37,39 @@ runs:
       working-directory: ${{runner.temp}}
       shell: bash
       run: |-
-        printf '::group::Installing the tree-sitter library\n'
+        printf '::group::Cloning tree-sitter\n'
+
         git clone "$TREE_SITTER_REPO" tree-sitter -q --filter=blob:none
         cd tree-sitter && git checkout "$TREE_SITTER_REF"
-        make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
-        make PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib" install
+
+        cmake -S lib -B build -G Ninja \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DCMAKE_INSTALL_PREFIX="$TREE_SITTER_LIB"
+        cmake --build build && cmake --install build
+
+        cmake -S lib -B build -G Ninja \
+          -DBUILD_SHARED_LIBS=ON \
+          -DCMAKE_INSTALL_PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
+        cmake --build build && cmake --install build
+
         printf '::endgroup::\n'
     - name: Set up library paths
       shell: sh
       run: |-
-        printf '%s\n' >> "$GITHUB_ENV" \
-          "LD_LIBRARY_PATH=$RUNNER_TOOL_CACHE/tree-sitter/lib/lib" \
-          "PKG_CONFIG_PATH=$RUNNER_TOOL_CACHE/tree-sitter/lib/lib/pkgconfig"
+        PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
+        printf 'PKG_CONFIG_PATH=%s/lib/pkgconfig\n' >> "$GITHUB_ENV" \
+          "${PKG_CONFIG_PATH}${PKG_CONFIG_PATH+:}${PREFIX}"
+        if [[ $RUNNER_OS == Linux ]]; then
+          printf 'LD_LIBRARY_PATH=%s/lib\n' >> "$GITHUB_ENV" \
+            "${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}${PREFIX}"
+        else if [[ $RUNNER_OS == macOS ]]; then
+          printf 'DYLD_LIBRARY_PATH=%s/lib\n' >> "$GITHUB_ENV" \
+            "${DYLD_LIBRARY_PATH}${DYLD_LIBRARY_PATH+:}${PREFIX}"
+        else
+          printf '%s/lib\n' "$PREFIX" >> "$GITHUB_PATH"
+        fi
+      env:
+        PATH_SEP: ${{runner.os != 'Windows' && ':' || ';'}}
     - name: Save tree-sitter library to cache
       uses: actions/cache/save@v4
       if: >-
