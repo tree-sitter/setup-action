@@ -42,12 +42,12 @@ runs:
         git clone "$TREE_SITTER_REPO" tree-sitter -q --filter=blob:none
         cd tree-sitter && git checkout "$TREE_SITTER_REF"
 
-        cmake -S lib -B build -G Ninja \
+        cmake -S lib -B build \
           -DBUILD_SHARED_LIBS=OFF \
           -DCMAKE_INSTALL_PREFIX="$TREE_SITTER_LIB"
         cmake --build build && cmake --install build
 
-        cmake -S lib -B build -G Ninja \
+        cmake -S lib -B build \
           -DBUILD_SHARED_LIBS=ON \
           -DCMAKE_INSTALL_PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
         cmake --build build && cmake --install build
