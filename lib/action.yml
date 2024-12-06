@@ -44,7 +44,7 @@ runs:
 
         cmake -S lib -B build \
           -DBUILD_SHARED_LIBS=OFF \
-          -DCMAKE_INSTALL_PREFIX="$TREE_SITTER_LIB"
+          -DCMAKE_INSTALL_PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
         cmake --build build && cmake --install build
 
         cmake -S lib -B build \
