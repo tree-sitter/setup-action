@@ -44,17 +44,23 @@ runs:
 
         cmake -S lib -B build \
           -DBUILD_SHARED_LIBS=OFF \
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON \
+          -DCMAKE_INSTALL_LIBDIR=lib \
+          -DCMAKE_INSTALL_BINDIR=lib \
           -DCMAKE_INSTALL_PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
-        cmake --build build && cmake --install build
+        cmake --build build && cmake --install build --config Debug
 
         cmake -S lib -B build \
           -DBUILD_SHARED_LIBS=ON \
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON \
+          -DCMAKE_INSTALL_LIBDIR=lib \
+          -DCMAKE_INSTALL_BINDIR=lib \
           -DCMAKE_INSTALL_PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
-        cmake --build build && cmake --install build
+        cmake --build build && cmake --install build --config Debug
 
         printf '::endgroup::\n'
     - name: Set up library paths
-      shell: sh
+      shell: bash
       run: |-
         PREFIX="$RUNNER_TOOL_CACHE/tree-sitter/lib"
         printf 'PKG_CONFIG_PATH=%s/lib/pkgconfig\n' >> "$GITHUB_ENV" \
@@ -62,7 +68,7 @@ runs:
         if [[ $RUNNER_OS == Linux ]]; then
           printf 'LD_LIBRARY_PATH=%s/lib\n' >> "$GITHUB_ENV" \
             "${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}${PREFIX}"
-        else if [[ $RUNNER_OS == macOS ]]; then
+        elif [[ $RUNNER_OS == macOS ]]; then
           printf 'DYLD_LIBRARY_PATH=%s/lib\n' >> "$GITHUB_ENV" \
             "${DYLD_LIBRARY_PATH}${DYLD_LIBRARY_PATH+:}${PREFIX}"
         else
