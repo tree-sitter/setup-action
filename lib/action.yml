@@ -31,7 +31,7 @@ runs:
       id: cache-lib
       with:
         path: ${{runner.tool_cache}}/tree-sitter/lib
-        key: tree-sitter-lib-${{runner.os}}-${{env.TREE_SITTER_REF}}
+        key: tree-sitter-lib-${{runner.os}}-${{runner.arch}}-${{env.TREE_SITTER_REF}}
     - name: Install tree-sitter library
       if: steps.cache-lib.outputs.cache-hit != 'true'
       working-directory: ${{runner.temp}}
@@ -83,4 +83,4 @@ runs:
         steps.cache-lib.outputs.cache-hit != 'true'
       with:
         path: ${{runner.tool_cache}}/tree-sitter/lib
-        key: tree-sitter-lib-${{runner.os}}-${{env.TREE_SITTER_REF}}
+        key: tree-sitter-lib-${{runner.os}}-${{runner.arch}}-${{env.TREE_SITTER_REF}}

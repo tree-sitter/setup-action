@@ -31,7 +31,7 @@ runs:
       id: cache-cli
       with:
         path: ${{runner.tool_cache}}/tree-sitter/cli
-        key: tree-sitter-cli-${{runner.os}}-${{env.TREE_SITTER_REF}}
+        key: tree-sitter-cli-${{runner.os}}-${{runner.arch}}-${{env.TREE_SITTER_REF}}
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       if: >-
@@ -74,4 +74,4 @@ runs:
         steps.cache-cli.outputs.cache-hit != 'true'
       with:
         path: ${{runner.tool_cache}}/tree-sitter/cli
-        key: tree-sitter-cli-${{runner.os}}-${{env.TREE_SITTER_REF}}
+        key: tree-sitter-cli-${{runner.os}}-${{runner.arch}}-${{env.TREE_SITTER_REF}}
