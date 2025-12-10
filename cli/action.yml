@@ -65,7 +65,7 @@ runs:
       working-directory: ${{runner.temp}}
       shell: bash
       run: |-
-        config="$(tree-sitter init-config | cut -c32- | tr '\\' '/')"
+        config="$(tree-sitter init-config 2>&1 | cut -c32- | tr '\\' '/')"
         printf '{"parser-directories":["%q"]}' "${GITHUB_WORKSPACE%/*}" > "$config"
     - name: Save tree-sitter CLI to cache
       uses: actions/cache/save@v4
