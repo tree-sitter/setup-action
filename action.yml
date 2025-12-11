@@ -23,13 +23,13 @@ runs:
   using: composite
   steps:
     - name: Install the CLI
-      uses: tree-sitter/setup-action/cli@v1
+      uses: tree-sitter/setup-action/cli@v2
       if: inputs.install-cli == 'true'
       with:
         rust-toolchain: ${{inputs.rust-toolchain}}
         tree-sitter-ref: ${{inputs.tree-sitter-ref}}
     - name: Install the library
-      uses: tree-sitter/setup-action/lib@v1
+      uses: tree-sitter/setup-action/lib@v2
       if: inputs.install-lib == 'true'
       with:
         tree-sitter-ref: ${{inputs.tree-sitter-ref}}
