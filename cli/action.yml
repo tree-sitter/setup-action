@@ -43,7 +43,7 @@ runs:
       if: steps.cache-cli.outputs.cache-hit != 'true'
       shell: bash
       run: |-
-        if [[ ${TREE_SITTER_REF:0:1} == v ]]; then
+        if [[ ${TREE_SITTER_REF:0:1} == v || $TREE_SITTER_REF == nightly ]]; then
           mkdir -p "$RUNNER_TOOL_CACHE/tree-sitter/cli/bin"
           [[ ${RUNNER_OS} == Windows ]] && exe=tree-sitter.exe || exe=tree-sitter
           os=$(tr '[:upper:]' '[:lower:]' <<< "$RUNNER_OS")
